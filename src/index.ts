@@ -1,56 +1,9 @@
-import { createServer } from "http";
-import express from "express";
-import { ApolloServer, gql } from "apollo-server-express";
-const { prisma } = require('./prisma/client')
+import { ApolloServer, gql } from "apollo-server";
+import typeDefs from "./prisma/schema"
+import resolvers from "./resolvers"
 
-// 1
-const startServer = async () => {
+const port = process.env.PORT || 9090;
 
-    // 2
-    const app = express()
-    const httpServer = createServer(app)
+const server = new ApolloServer({ resolvers, typeDefs });
 
-
-    const typeDefs = gql`
-        type Query {
-        boards: [Board]
-        }
-    
-        type Board {
-        id: ID!
-        title: String!
-        description: String
-        path: String!
-        }
-    `;
-
-    const resolvers = {
-        Query: {
-            boards: () => {
-                return prisma.board.findMany()
-            }
-        },
-    };
-
-    // 5
-    const apolloServer = new ApolloServer({
-        typeDefs,
-        resolvers,
-    })
-
-    // 6
-    await apolloServer.start()
-
-    // 7
-    apolloServer.applyMiddleware({
-        app,
-        path: '/api'
-    })
-
-    // 8
-    httpServer.listen({ port: process.env.PORT || 4000 }, () =>
-        console.log(`Server listening on localhost:4000${apolloServer.graphqlPath}`)
-    )
-}
-
-startServer()
+server.listen({ port }, () => console.log(`Server runs at: http://localhost:${port}`));
